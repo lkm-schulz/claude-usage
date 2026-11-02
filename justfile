@@ -9,6 +9,16 @@ dash: _deps
 serve:
     PORT={{port}} node serve.mjs
 
+# serve the dashboard in the background and open it; the server survives closing the terminal, not logout
+start:
+    @mkdir -p data
+    @PORT={{port}} nohup node "{{justfile_directory()}}/serve.mjs" >> data/serve.log 2>&1 &
+    @echo "log in data/serve.log; just stop stops the server"
+
+# stop the server that just start started
+stop:
+    @pkill -f "{{justfile_directory()}}/serve.mjs" && echo stopped || echo "not running"
+
 # snapshot the current usage into data/
 collect: _deps
     node collect.mjs

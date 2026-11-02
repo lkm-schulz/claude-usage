@@ -17,6 +17,6 @@ just schedule   # collects daily at 09:00 and at login
 just            # collects, serves the dashboard on localhost and opens it
 ```
 
-The URL is printed in the terminal. The server uses port 4317, or the next free port; when the dashboard already runs, `just` opens the running one. While the server runs, the server collects every 10 minutes and the page reloads with the new data. `just serve` starts without collecting first, unless the data is older than 10 minutes; `just log` shows the daily job's recent runs, `just unschedule` removes the daily job.
+The URL is printed in the terminal. The server uses port 4317, or the next free port; when the dashboard already runs, `just` opens the running one. While the server runs, the server collects every 10 minutes and the page reloads with the new data. `just serve` starts without collecting first, unless the data is older than 10 minutes; `just start` serves in the background until `just stop` or logout, with the server log in `data/serve.log`; `just log` shows the daily job's recent runs, `just unschedule` removes the daily job.
 
 History lives in `data/` as JSON. Each run keeps the larger of the stored and the fresh record for every day and session, so transcripts that Claude Code deletes never shrink the history. Set `cleanupPeriodDays` in `~/.claude/settings.json` to keep transcripts longer.
