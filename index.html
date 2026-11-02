@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Code Usage</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand" id="brand"></div>
+  <div class="counts" id="counts"></div>
+  <div class="ranges" role="group" aria-label="Time range" id="ranges"></div>
+</header>
+<main id="main">
+  <section class="card" id="spend"></section>
+  <div class="stack" id="right">
+    <section class="card" id="plan"></section>
+    <section class="card" id="models"></section>
+  </div>
+  <section class="card" id="tools"></section>
+  <section class="card" id="proj"></section>
+  <section class="card" id="cal"></section>
+</main>
+<div id="tip" hidden></div>
+<!-- Written by collect.mjs; a classic script, since browsers block fetch() and modules on file:// pages. -->
+<script src="data/dashboard.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

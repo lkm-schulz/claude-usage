@@ -1,0 +1,174 @@
+/* Layout and fonts follow live-feed's Umbra panel (live-feed web/panels/umbra.js, umbra-platform ui/src/tokens.css).
+   Marks are gray; Claude orange means "now" (today, plan usage) and carries the brand; red means ahead of pace.
+   Model families: opus light blue, sonnet yellow, fable violet, haiku green. Fixed per family, never by rank, and none
+   of them orange, so a family never reads as "now". Every swatch sits beside its model name, so identity never rests
+   on color alone (sonnet and haiku collide under protanopia; opus and fable are close in hue). */
+@font-face { font-family: "Space Grotesk Variable"; font-weight: 300 700; font-display: block; src: url(fonts/space-grotesk-latin-wght-normal.woff2) format("woff2-variations"); }
+@font-face { font-family: "JetBrains Mono Variable"; font-weight: 100 800; font-display: block; src: url(fonts/jetbrains-mono-latin-wght-normal.woff2) format("woff2-variations"); }
+
+:root {
+  color-scheme: dark;
+  --ground: #000; --panel: #0e0e10; --line: #303036; --fg: #f2f2f2; --muted: #9b9b9b; --dim: #6f6f76;
+  --grid: #1f1f24; --baseline: #4a4a52; --bar: #5c5c66; --meter: #8a8a94; --track: #1c1c20;
+  --now: #d77757; --over: #ff5a5f; --waiting: #ffb224; --hover: rgb(255 255 255 / .09);
+  --opus: #4fb3e8; --sonnet: #c98500; --fable: #9085e9; --haiku: #2e9e3e; --other: #6b6a65;
+  /* Sequential Claude orange for the heat maps, every step at least 2:1 against the panel except the empty cell. */
+  --heat-0: #1c1c20; --heat-1: #6c3828; --heat-2: #8e4a35; --heat-3: #b25f45; --heat-4: #d77757;
+  --text: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --data: "JetBrains Mono Variable", ui-monospace, monospace;
+  /* Type scale: axis and table heads, body, stat values, card figures, the one hero. */
+  --fs-xs: .85rem; --fs-s: 1rem; --fs-m: 1.35rem; --fs-l: 2.4rem; --fs-xl: 3.8rem;
+  --gap: 1.1rem; --pad: 1.3rem 1.5rem; --radius: 2px;
+  /* Everything is sized in rem, and rem follows the viewport, so a laptop, a 4K screen and a TV show the same picture.
+     The height cap keeps an ultrawide screen from scaling the text past what its height holds. */
+  font-size: clamp(12px, min(calc(.48vw + .42vh), 1.4vh), 26px);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--ground); color: var(--fg); font-family: var(--text); }
+body { height: 100vh; padding: 1.4rem 1.6rem; display: flex; flex-direction: column; gap: var(--gap); }
+b { font-weight: inherit; color: var(--fg); }
+
+header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .8rem 2rem; flex: none; }
+/* The mark is Claude Code's working spinner: one glyph cycling through the sparkle set, in Claude orange. */
+.brand { display: flex; align-items: baseline; gap: .7rem; white-space: nowrap; }
+.brand .spark { width: 1.6rem; font-size: 1.7rem; line-height: 1; color: var(--now); text-align: center; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.brand .name { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; }
+.brand .unit { font: 400 1.6rem var(--data); color: var(--muted); }
+.counts { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 2rem; font: var(--fs-s) var(--data); color: var(--muted); }
+.counts .stale { color: var(--waiting); }
+.counts .clock { color: var(--dim); }
+.ranges { display: flex; border: 1px solid var(--line); border-radius: var(--radius); }
+.ranges button { font: var(--fs-s) var(--data); color: var(--muted); background: none; border: 0; padding: .35rem .9rem; cursor: pointer; }
+.ranges button + button { border-left: 1px solid var(--line); }
+.ranges button:hover { color: var(--fg); }
+.ranges button[aria-pressed="true"] { background: var(--track); color: var(--fg); }
+.ranges button:focus-visible { outline: 2px solid var(--now); outline-offset: -2px; }
+
+/* The grid fills the window but never drops below the height every card needs to stay readable; a shorter window
+   scrolls instead of squeezing the charts flat. */
+main { flex: 1 1 0; display: grid; gap: var(--gap); min-height: 62rem; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--pad);
+  display: flex; flex-direction: column; gap: .9rem; min-width: 0; min-height: 0; overflow: hidden; container-type: inline-size;
+}
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: .4rem 1.2rem; flex-wrap: wrap; font: var(--fs-s) var(--data); color: var(--muted); }
+/* Titles are written in Title Case and shown in Umbra's tracked mono caps. */
+h2, h3 { margin: 0; font: 400 var(--fs-s) var(--data); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+h3 { font-size: var(--fs-xs); }
+.hero, .figure { font-family: var(--text); color: var(--fg); }
+.hero { font-size: var(--fs-xl); font-weight: 700; line-height: 1; letter-spacing: -.02em; }
+.figure { font-size: var(--fs-l); font-weight: 700; line-height: 1; letter-spacing: -.01em; }
+.sub { display: flex; align-items: baseline; flex-wrap: wrap; gap: .3rem 1.2rem; font: var(--fs-s) var(--data); color: var(--muted); }
+.fill { flex: 1; min-height: 0; min-width: 0; position: relative; }
+/* Widget contents sit out of flow: they are drawn to the box's measured size, so they must never size the box, or every
+   redraw would grow the grid and trigger the next redraw. */
+.fill > * { position: absolute; inset: 0; overflow: hidden; }
+.fill > svg { width: 100%; height: 100%; display: block; overflow: visible; }
+svg text { font-family: var(--data); fill: var(--muted); }
+svg text.value { fill: var(--fg); }
+.none { font: var(--fs-s) var(--data); color: var(--muted); padding-top: .4rem; }
+.legend { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem .5rem; font: var(--fs-xs) var(--data); color: var(--muted); }
+.legend i, .meter i, td i { display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; }
+.meter i, td i { margin-right: .5rem; vertical-align: -.05rem; }
+
+/* Spend: hero and chart. */
+#spend .body { flex: 1; display: flex; min-height: 0; }
+#spend .main { flex: 1; display: flex; flex-direction: column; gap: .9rem; min-width: 0; }
+
+/* Plan usage: the windows side by side, each the share used against even pacing; stacked in a narrow card. */
+#plan { flex: none; }
+#plan .windows { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.4rem 2.4rem; }
+.window { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: .7rem 1rem; }
+.window .title { display: flex; align-items: baseline; gap: 1rem; }
+.window .state { font: var(--fs-s) var(--data); color: var(--muted); text-align: right; }
+.window.over .state { color: var(--over); }
+.window .gauge { grid-column: 1 / -1; position: relative; height: .9rem; background: var(--track); border-radius: var(--radius); }
+.window .used { height: 100%; background: var(--now); border-radius: var(--radius); }
+.window.over .used { background: var(--over); }
+.window .pace { position: absolute; top: -.35rem; bottom: -.35rem; width: 2px; margin-left: -1px; background: var(--fg); }
+.window .meta { grid-column: 1 / -1; font: var(--fs-s) var(--data); color: var(--muted); }
+
+/* Token stats: a grid of values one step below the card figure. */
+#models .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .9rem 1.2rem; }
+#models { gap: .75rem; }
+#models .stat b { display: block; font-size: 1.7rem; font-weight: 600; line-height: 1.15; white-space: nowrap; }
+#models .stat span { display: block; font: var(--fs-s) var(--data); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@container (max-width: 34rem) { #models .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Tool calls: figure, then the heat map and the top commands side by side. */
+#tools .body { flex: 1; display: flex; gap: 2rem; min-height: 0; }
+#tools .map { flex: 1.25; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+#tools .mix { flex: 1; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.meter .shell { color: var(--muted); }
+
+/* Calendar: the head carries the legend; the grid fills the rest. */
+#cal { gap: .7rem; }
+
+/* Name, a bar against the list's biggest value, the value. One grid for the whole list, rows on its subgrid, so every
+   track starts and ends at the same x. */
+.meters { display: grid; grid-template-columns: minmax(0, 11rem) minmax(3rem, 1fr) max-content; gap: .6rem 1rem; align-content: start; }
+.meter { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; font: var(--fs-s) var(--data); }
+.meter > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meter > span:last-child { text-align: right; }
+.meter .track { height: .6rem; background: var(--track); border-radius: var(--radius); }
+.meter .track div { height: 100%; min-width: 2px; background: var(--meter); border-radius: var(--radius); }
+.meter.other { color: var(--muted); }
+.meter.other .track div { background: var(--bar); }
+.meter[data-tip]:hover > span:first-child { color: var(--fg); }
+.meter[data-tip]:hover .track div { background: var(--fg); }
+
+/* Projects: the name takes what the fixed columns leave. */
+table { width: 100%; border-collapse: collapse; font: var(--fs-s) var(--data); table-layout: fixed; }
+th { font-weight: 400; font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0 0 .5rem; border-bottom: 1px solid var(--line); }
+td { padding: .45rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid var(--grid); }
+th + th, td + td { padding-left: 1.4rem; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.dim { color: var(--muted); }
+tr[data-tip]:hover td { background: var(--track); }
+.c-proj { width: auto; } .c-n { width: 6.5rem; } .c-dur { width: 7rem; } .c-last { width: 10rem; } .c-model { width: 11rem; } .c-tok { width: 6.5rem; } .c-cost { width: 6rem; }
+@container (max-width: 62rem) { .c-last { display: none; } }
+@container (max-width: 52rem) { .c-tok { display: none; } }
+@container (max-width: 42rem) { .c-model { display: none; } }
+@container (max-width: 32rem) { .c-n { display: none; } }
+
+/* Hover feedback for every mark that carries a tooltip. */
+.hit { fill: transparent; }
+.hit:hover { fill: var(--hover); }
+.cell:hover { stroke: var(--fg); }
+
+#tip {
+  position: fixed; z-index: 10; pointer-events: none; padding: .55rem .75rem; background: #18181b; border: 1px solid var(--line);
+  border-radius: var(--radius); font: var(--fs-xs)/1.5 var(--data); color: var(--fg); white-space: pre; box-shadow: 0 0 40px rgb(0 0 0 / .6);
+}
+#tip[hidden] { display: none; }
+.empty { margin: auto; font: var(--fs-m) var(--data); color: var(--muted); text-align: center; line-height: 1.8; }
+.empty code, .none code { color: var(--fg); }
+
+/* Landscape: every row split 7:5, the calendar across both at the bottom. The right column of the top row stacks the
+   plan card, at its content's height, over the models card, which takes the rest. One screen without scrolling. */
+main {
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  /* The top row's minimum holds the plan card and the models card with its three rows. */
+  grid-template-rows: minmax(33rem, 1.3fr) minmax(16rem, .9fr) minmax(10rem, .62fr);
+  grid-template-areas: "spend right" "tools proj" "cal cal";
+}
+.stack { display: flex; flex-direction: column; gap: var(--gap); min-height: 0; min-width: 0; }
+.stack > #models { flex: 1; }
+#spend { grid-area: spend; } #right { grid-area: right; }
+#cal { grid-area: cal; } #proj { grid-area: proj; } #tools { grid-area: tools; }
+
+/* Portrait and narrow screens: one column, each card as tall as its contents; charts get a fixed height. */
+@media (max-width: 1100px), (max-aspect-ratio: 1/1) {
+  body { height: auto; }
+  main { flex: none; min-height: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "spend" "right" "tools" "proj" "cal"; }
+  #tools .body { flex-direction: column; }
+  .fill.chart { flex: none; height: 15rem; }
+  #cal .fill.chart { height: 11rem; }
+  .fill.list, .fill.list > * { position: static; }
+}
+@media (max-width: 640px) {
+  body { padding: 1rem; }
+  :root { --pad: 1.1rem 1.1rem; --fs-xl: 3.2rem; --fs-l: 2.1rem; }
+  .fill.chart { height: 12rem; }
+  #cal .fill.chart { height: 9rem; }
+}
