@@ -324,9 +324,13 @@ function planCard(el) {
 
 function toolsCard(el, dates, range) {
   const grid = WEEKDAYS.map(() => Array(24).fill(0));
+  // A range holds 4 or 5 of each weekday, so each cell averages over that weekday's days in the range, counting only
+  // days since the history began.
+  const weekdays = Array(7).fill(0);
   const tools = {}, commands = {};
   let prompts = 0;
   for (const d of dates) {
+    if (d >= firstDay) weekdays[weekday(d)]++;
     const a = DATA.activity[d];
     if (!a) continue;
     prompts += a.prompts;
@@ -334,6 +338,7 @@ function toolsCard(el, dates, range) {
     for (const [t, v] of Object.entries(a.tools)) add(tools, t, v);
     for (const [c, v] of Object.entries(a.commands ?? {})) add(commands, c, v);
   }
+  grid.forEach((row, r) => row.forEach((v, h) => { row[h] = weekdays[r] ? v / weekdays[r] : 0; }));
   const total = sum(Object.values(tools));
   // Bash is most of the calls, so it is shown by the program each command ran, ranked with the other tools.
   const rows = [
@@ -344,11 +349,11 @@ function toolsCard(el, dates, range) {
     <div class="head"><h2>Tool Calls · ${range[3]}</h2></div>
     <div class="sub"><span class="figure">${compact(total)}</span><span>calls · ${counted(prompts, "prompt")} · <b>${prompts ? (total / prompts).toFixed(1) : "–"}</b> per prompt</span></div>
     <div class="body">
-      <div class="map"><div class="head"><h3>By Weekday and Hour</h3>${heatLegend()}</div><div class="fill chart"></div></div>
+      <div class="map"><div class="head"><h3>Average by Weekday and Hour</h3>${heatLegend()}</div><div class="fill chart"></div></div>
       <div class="mix"><h3>Top Commands and Tools</h3><div class="fill list"></div></div>
     </div>`;
   const map = el.querySelector(".chart");
-  if (total) heatMap(map, grid, (r, h, v) => `${WEEKDAYS[r]} ${pad(h)}:00–${pad((h + 1) % 24)}:00\n${n(v)} tool calls`);
+  if (total) heatMap(map, grid, (r, h, v) => `${WEEKDAYS[r]} ${pad(h)}:00–${pad((h + 1) % 24)}:00\n${v.toFixed(1)} avg tool calls`);
   else map.innerHTML = `<div class="none">no tool calls in range</div>`;
   meters(el.querySelector(".list"), rows, { total, of: "tool calls" });
 }
