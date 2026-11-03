@@ -112,7 +112,8 @@ let collecting = false;
 function collect() {
   if (collecting) return;
   collecting = true;
-  execFile(process.execPath, [join(ROOT, "collect.mjs")], { cwd: ROOT }, (e, stdout, stderr) => {
+  // "node" from PATH, not process.execPath: a Homebrew upgrade deletes the versioned binary this server started from.
+  execFile("node", [join(ROOT, "collect.mjs")], { cwd: ROOT }, (e, stdout, stderr) => {
     collecting = false;
     console.log(e ? (stderr.trim().split("\n")[0] || `Couldn't collect: ${e.message}`) : stdout.trim());
   });
